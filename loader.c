@@ -74,9 +74,12 @@ void load_and_run_elf(char** exe) {
                 entry = (entry - phdr.p_vaddr) + (Elf32_Addr)segment_addr;
                 int (*_start)() = (int (*)())entry;
                 // _start();
-                printf("entry: %d", _start());
+                int result = _start();
+                printf("User _start return value = %d\n",result);
+                break;  
+
                 // printf("User _start return value = %d\n",8);
-                break;
+                
             }
         }
     }
