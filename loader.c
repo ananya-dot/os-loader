@@ -11,20 +11,20 @@ void load_and_run_elf(char** exe) {
     fd = open(exe[1], O_RDONLY);
     
     if (fd < 0) {
-        perror("open");
+        printf("error in opening file");
         return;
     }
     
     ehdr = (Elf32_Ehdr *)malloc(sizeof(Elf32_Ehdr));
     if (ehdr == NULL) {
-        perror("malloc");
+        printf("error in maalloc");
         close(fd);
         return;
     }
     
 
     if (read(fd, ehdr, sizeof(Elf32_Ehdr)) != sizeof(Elf32_Ehdr)) {
-        perror("read");
+        printf("error");
         free(ehdr);
         close(fd);
         return;
@@ -39,7 +39,7 @@ void load_and_run_elf(char** exe) {
         
         lseek(fd, ehdr->e_phoff + i * ehdr->e_phentsize, SEEK_SET);
         if (read(fd, &phdr, sizeof(Elf32_Phdr)) != sizeof(Elf32_Phdr)) {
-            perror("read");
+            printf("error");
             free(ehdr);
             close(fd);
             return;
@@ -51,12 +51,12 @@ void load_and_run_elf(char** exe) {
                 phdr.p_memsz,
                 PROT_READ | PROT_WRITE | PROT_EXEC,
                 MAP_ANONYMOUS | MAP_PRIVATE,
-                -1,
+                0,
                 0
             );
 
             if (segment_addr == MAP_FAILED) {
-                perror("mmap");
+                printf("mmap not working");
                 free(ehdr);
                 close(fd);
                 return;
@@ -64,14 +64,14 @@ void load_and_run_elf(char** exe) {
 
             lseek(fd, phdr.p_offset, SEEK_SET);
             if (read(fd, segment_addr, phdr.p_filesz) != phdr.p_filesz) {
-                perror("read");
+                printf("error");
                 free(ehdr);
                 close(fd);
                 return;
             }
 
             if (entry >= phdr.p_vaddr && entry < (phdr.p_vaddr + phdr.p_memsz)) {
-                entry = (entry - phdr.p_vaddr) + (Elf32_Addr)segment_addr;
+                entry = entry - phdr.p_vaddr + (Elf32_Addr)segment_addr;
                 int (*_start)() = (int (*)())entry;
                 // _start();
                 int result = _start();
@@ -86,7 +86,7 @@ void load_and_run_elf(char** exe) {
      
   
   
-    // loader_cleanup();
+    loader_cleanup();
     close(fd);
 }
 
